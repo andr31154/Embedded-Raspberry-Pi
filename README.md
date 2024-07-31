@@ -98,3 +98,16 @@ for 1 second is then set, then the LED is toggled.
 
 In the end the programme waits for the button to be pressed, then toggles the LED.
 
+### Discover 🔍
+
+The server this was run on was running on `192.168.1.199:3000`. The task's purpose
+is to send a specific code to it ("11OP63D3"). In exchange, the programme receives
+a message that is then printed to serial. 
+
+A logger and a WiFi task have to be spawned. The control peripheral on the CYW43 chip
+is initialized. A `Config` is created using a static address.
+Then we have to connect to the access point using the Wyliodrin network with the
+password "g3E2PjWy".
+
+After successful connection to the server, it sends to the server the code (11OP63D3),
+and prints the response received to the USB. The message has to be then decoded :).
