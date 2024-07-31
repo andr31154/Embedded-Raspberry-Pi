@@ -57,7 +57,7 @@ fn panic_handler(_pc: &core::panic::PanicInfo) -> ! {
 async fn main(_spawner: Spawner) {
 	let p = embassy_rp::init(Default::default());
 
-	// ************** WiFi Chip initialization - DO NOT MODIFY! *****************
+	// ************** WiFi Chip initialization *****************
 
 	// Firmware.
 	let fw = include_bytes!("../cyw43-firmware/43439A0.bin");
@@ -81,31 +81,31 @@ async fn main(_spawner: Spawner) {
 	let (_net_device, mut control, runner) = cyw43::new(state, pwr, spi, fw).await;
 	// ************************************************************************
 
-	// 1. TODO: Spawn `logger_task`.
+	// 1. Spawns `logger_task`.
 	let driver1 = Driver::new(p.USB, Irqs);
 	_spawner.spawn(logger_task(driver1)).unwrap();
 
-	// 2. TODO: Spawn `wifi_task`.
+	// 2. Spawns `wifi_task`.
 	
 	_spawner.spawn(wifi_task(runner)).unwrap();
 
-	// Initialize the control peripheral on the CYW43 chip.
+	// Initializes the control peripheral on the CYW43 chip.
 	control.init(clm).await;
 	control
 		.set_power_management(cyw43::PowerManagementMode::Performance)
 		.await;
 
-	// 3. TODO: Create a `Config` using a static address.
+	// 3. Creates a `Config` using a static address.
 	let config = Config::ipv4_static(StaticConfigV4 {
 		address: Ipv4Cidr::new(Ipv4Address::new(192, 168, 1, 57), 24),
 		gateway: Some(Ipv4Address::new(192, 168, 1, 1)),
 		dns_servers: heapless::Vec::new()
 	});
 
-	// Generate random seed
+	// Generates random seed
 	let _seed: u64 = 0x0123_4567_89ba_cdef; // chosen by fair dice roll. guarenteed to be random.
 
-	// 4. TODO: Init network stack
+	// 4. Init network stack
 	static _STACK: StaticCell<Stack<cyw43::NetDriver<'static>>> = StaticCell::new();
 	static _RESOURCES: StaticCell<StackResources<2>> = StaticCell::new();
 
@@ -116,11 +116,10 @@ async fn main(_spawner: Spawner) {
 	    _seed,
 	));
 
-	// 5. TODO: Spawn `net_task`.
+	// 5. Spawns `net_task`.
 	_spawner.spawn(net_task(stack)).unwrap();
 
-	// 6. TODO: Try to connect to the AP network.
-	// **HINT**: Don't give up if it fails!
+	// 6. Connects to the AP network.
 	loop {
 		if control.join_wpa2(_WIFI_NETWORK, _WIFI_PASSWORD).await.is_ok() {
 			break;
@@ -128,10 +127,9 @@ async fn main(_spawner: Spawner) {
 	}
 	info!("connected to !!!");
 
-
-	// 7. TODO: Create a socket and connect to our server.
-	// Send to the server the code on the box you were given,
-	// and print the response receivedto the USB
+	// 7. Creates a socket and connects to the server.
+	// Sends to the server the code (11OP63D3),
+	// and prints the response received to the USB
 	// serial output using `log::info!`.
 	
 
@@ -144,7 +142,7 @@ async fn main(_spawner: Spawner) {
 	
 	loop {
 		if let Ok(_) = tcp_s.connect(endpoint).await {
-			info!("S-a logat!");
+			info!("Connected successfully!");
 			break;
 		}
 	}	
@@ -152,7 +150,7 @@ async fn main(_spawner: Spawner) {
 
 	loop {
 		if let Ok(_) = tcp_s.write(b"11OP63D3").await {
-			info!("S-a scris!");
+			info!("It's been written!");
 			break;
 		}
 	}
@@ -160,7 +158,7 @@ async fn main(_spawner: Spawner) {
 	let mut buffer = [0_u8;1234];
 	loop {
 		if let Ok(_) = tcp_s.read(&mut buffer).await {
-			info!("S-a primit! {}", core::str::from_utf8(&buffer).unwrap());
+			info!("It's been read! {}", core::str::from_utf8(&buffer).unwrap());
 			break;
 		}
 	}
